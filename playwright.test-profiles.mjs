@@ -44,7 +44,7 @@ export const ENVIRONMENTS = {
 export const PORTS = {
   [ENVIRONMENT_CI_DEV]: '4000',
   [ENVIRONMENT_CI_PROD]: '4173',
-  [ENVIRONMENT_LOCAL_DEV]: '3000',
+  [ENVIRONMENT_LOCAL_DEV]: '3001',
 };
 
 /** Likely deprecated, not used anywhere except defaulting to modern */

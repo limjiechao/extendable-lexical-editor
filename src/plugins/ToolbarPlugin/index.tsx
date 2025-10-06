@@ -36,6 +36,7 @@ import {
   mergeRegister,
 } from '@lexical/utils';
 import {
+  $addUpdateTag,
   $getNodeByKey,
   $getSelection,
   $isElementNode,
@@ -45,17 +46,22 @@ import {
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
+  CommandPayloadType,
   ElementFormatType,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
   HISTORIC_TAG,
   INDENT_CONTENT_COMMAND,
+  LexicalCommand,
   LexicalEditor,
   LexicalNode,
   NodeKey,
   OUTDENT_CONTENT_COMMAND,
   REDO_COMMAND,
   SELECTION_CHANGE_COMMAND,
+  SKIP_DOM_SELECTION_TAG,
+  SKIP_SELECTION_FOCUS_TAG,
+  TextFormatType,
   UNDO_COMMAND,
 } from 'lexical';
 import {Dispatch, useCallback, useEffect, useState} from 'react';
@@ -69,6 +75,7 @@ import {
 import useModal from '../../hooks/useModal';
 import DropDown, {DropDownItem} from '../../ui/DropDown';
 import DropdownColorPicker from '../../ui/DropdownColorPicker';
+import {isKeyboardInput} from '../../utils/focusUtils';
 import {getSelectedNode} from '../../utils/getSelectedNode';
 import {sanitizeUrl} from '../../utils/url';
 import {InsertEquationDialog} from '../EquationsPlugin';
@@ -354,6 +361,7 @@ function FontDropDown({
   const handleClick = useCallback(
     (option: string) => {
       editor.update(() => {
+        $addUpdateTag(SKIP_SELECTION_FOCUS_TAG);
         const selection = $getSelection();
         if (selection !== null) {
           $patchStyleText(selection, {
@@ -549,6 +557,26 @@ export default function ToolbarPlugin({
   const [modal, showModal] = useModal();
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
   const {toolbarState, updateToolbarState} = useToolbarState();
+
+  const dispatchToolbarCommand = <T extends LexicalCommand<unknown>>(
+    command: T,
+    payload: CommandPayloadType<T> | undefined = undefined,
+    skipRefocus: boolean = false,
+  ) => {
+    activeEditor.update(() => {
+      if (skipRefocus) {
+        $addUpdateTag(SKIP_DOM_SELECTION_TAG);
+      }
+
+      // Re-assert on Type so that payload can have a default param
+      activeEditor.dispatchCommand(command, payload as CommandPayloadType<T>);
+    });
+  };
+
+  const dispatchFormatTextCommand = (
+    payload: TextFormatType,
+    skipRefocus: boolean = false,
+  ) => dispatchToolbarCommand(FORMAT_TEXT_COMMAND, payload, skipRefocus);
 
   const $handleHeadingNode = useCallback(
     (selectedElement: LexicalNode) => {
@@ -795,9 +823,16 @@ export default function ToolbarPlugin({
   }, [$updateToolbar, activeEditor, editor, updateToolbarState]);
 
   const applyStyleText = useCallback(
-    (styles: Record<string, string>, skipHistoryStack?: boolean) => {
+    (
+      styles: Record<string, string>,
+      skipHistoryStack?: boolean,
+      skipRefocus: boolean = false,
+    ) => {
       activeEditor.update(
         () => {
+          if (skipRefocus) {
+            $addUpdateTag(SKIP_DOM_SELECTION_TAG);
+          }
           const selection = $getSelection();
           if (selection !== null) {
             $patchStyleText(selection, styles);
@@ -810,15 +845,19 @@ export default function ToolbarPlugin({
   );
 
   const onFontColorSelect = useCallback(
-    (value: string, skipHistoryStack: boolean) => {
-      applyStyleText({color: value}, skipHistoryStack);
+    (value: string, skipHistoryStack: boolean, skipRefocus: boolean) => {
+      applyStyleText({color: value}, skipHistoryStack, skipRefocus);
     },
     [applyStyleText],
   );
 
   const onBgColorSelect = useCallback(
-    (value: string, skipHistoryStack: boolean) => {
-      applyStyleText({'background-color': value}, skipHistoryStack);
+    (value: string, skipHistoryStack: boolean, skipRefocus: boolean) => {
+      applyStyleText(
+        {'background-color': value},
+        skipHistoryStack,
+        skipRefocus,
+      );
     },
     [applyStyleText],
   );
@@ -839,6 +878,7 @@ export default function ToolbarPlugin({
   const onCodeLanguageSelect = useCallback(
     (value: string) => {
       activeEditor.update(() => {
+        $addUpdateTag(SKIP_SELECTION_FOCUS_TAG);
         if (selectedElementKey !== null) {
           const node = $getNodeByKey(selectedElementKey);
           if ($isCodeNode(node)) {
@@ -870,9 +910,9 @@ export default function ToolbarPlugin({
     <div className="toolbar">
       <button
         disabled={!toolbarState.canUndo || !isEditable}
-        onClick={() => {
-          activeEditor.dispatchCommand(UNDO_COMMAND, undefined);
-        }}
+        onClick={(e) =>
+          dispatchToolbarCommand(UNDO_COMMAND, undefined, isKeyboardInput(e))
+        }
         title={IS_APPLE ? 'Undo (⌘Z)' : 'Undo (Ctrl+Z)'}
         type="button"
         className="toolbar-item spaced"
@@ -881,9 +921,9 @@ export default function ToolbarPlugin({
       </button>
       <button
         disabled={!toolbarState.canRedo || !isEditable}
-        onClick={() => {
-          activeEditor.dispatchCommand(REDO_COMMAND, undefined);
-        }}
+        onClick={(e) =>
+          dispatchToolbarCommand(REDO_COMMAND, undefined, isKeyboardInput(e))
+        }
         title={IS_APPLE ? 'Redo (⇧⌘Z)' : 'Redo (Ctrl+Y)'}
         type="button"
         className="toolbar-item"
@@ -1009,9 +1049,9 @@ export default function ToolbarPlugin({
           <Divider />
           <button
             disabled={!isEditable}
-            onClick={() => {
-              activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
-            }}
+            onClick={(e) =>
+              dispatchFormatTextCommand('bold', isKeyboardInput(e))
+            }
             className={
               'toolbar-item spaced ' + (toolbarState.isBold ? 'active' : '')
             }
@@ -1022,9 +1062,9 @@ export default function ToolbarPlugin({
           </button>
           <button
             disabled={!isEditable}
-            onClick={() => {
-              activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
-            }}
+            onClick={(e) =>
+              dispatchFormatTextCommand('italic', isKeyboardInput(e))
+            }
             className={
               'toolbar-item spaced ' + (toolbarState.isItalic ? 'active' : '')
             }
@@ -1035,9 +1075,9 @@ export default function ToolbarPlugin({
           </button>
           <button
             disabled={!isEditable}
-            onClick={() => {
-              activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
-            }}
+            onClick={(e) =>
+              dispatchFormatTextCommand('underline', isKeyboardInput(e))
+            }
             className={
               'toolbar-item spaced ' +
               (toolbarState.isUnderline ? 'active' : '')
@@ -1061,9 +1101,9 @@ export default function ToolbarPlugin({
           {hasCodeSnippets && canViewerSeeInsertCodeButton && (
             <button
               disabled={!isEditable}
-              onClick={() => {
-                activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code');
-              }}
+              onClick={(e) =>
+                dispatchFormatTextCommand('code', isKeyboardInput(e))
+              }
               className={
                 'toolbar-item spaced ' + (toolbarState.isCode ? 'active' : '')
               }
@@ -1080,12 +1120,9 @@ export default function ToolbarPlugin({
             buttonAriaLabel="Formatting options for additional text styles"
             buttonIconClassName="icon dropdown-more">
             <DropDownItem
-              onClick={() => {
-                activeEditor.dispatchCommand(
-                  FORMAT_TEXT_COMMAND,
-                  'strikethrough',
-                );
-              }}
+              onClick={(e) =>
+                dispatchFormatTextCommand('strikethrough', isKeyboardInput(e))
+              }
               className={
                 'item wide ' + dropDownActiveClass(toolbarState.isStrikethrough)
               }
@@ -1098,9 +1135,9 @@ export default function ToolbarPlugin({
               <span className="shortcut">{SHORTCUTS.STRIKETHROUGH}</span>
             </DropDownItem>
             <DropDownItem
-              onClick={() => {
-                activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'subscript');
-              }}
+              onClick={(e) =>
+                dispatchFormatTextCommand('subscript', isKeyboardInput(e))
+              }
               className={
                 'item wide ' + dropDownActiveClass(toolbarState.isSubscript)
               }
@@ -1113,12 +1150,9 @@ export default function ToolbarPlugin({
               <span className="shortcut">{SHORTCUTS.SUBSCRIPT}</span>
             </DropDownItem>
             <DropDownItem
-              onClick={() => {
-                activeEditor.dispatchCommand(
-                  FORMAT_TEXT_COMMAND,
-                  'superscript',
-                );
-              }}
+              onClick={(e) =>
+                dispatchFormatTextCommand('superscript', isKeyboardInput(e))
+              }
               className={
                 'item wide ' + dropDownActiveClass(toolbarState.isSuperscript)
               }
@@ -1132,9 +1166,9 @@ export default function ToolbarPlugin({
             </DropDownItem>
             <Divider />
             <DropDownItem
-              onClick={() => {
-                activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'capitalize');
-              }}
+              onClick={(e) =>
+                dispatchFormatTextCommand('capitalize', isKeyboardInput(e))
+              }
               className={
                 'item wide ' + dropDownActiveClass(toolbarState.isCapitalize)
               }
@@ -1147,9 +1181,9 @@ export default function ToolbarPlugin({
               <span className="shortcut">{SHORTCUTS.CAPITALIZE}</span>
             </DropDownItem>
             <DropDownItem
-              onClick={() => {
-                activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'lowercase');
-              }}
+              onClick={(e) =>
+                dispatchFormatTextCommand('lowercase', isKeyboardInput(e))
+              }
               className={
                 'item wide ' + dropDownActiveClass(toolbarState.isLowercase)
               }
@@ -1162,9 +1196,9 @@ export default function ToolbarPlugin({
               <span className="shortcut">{SHORTCUTS.LOWERCASE}</span>
             </DropDownItem>
             <DropDownItem
-              onClick={() => {
-                activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'uppercase');
-              }}
+              onClick={(e) =>
+                dispatchFormatTextCommand('uppercase', isKeyboardInput(e))
+              }
               className={
                 'item wide ' + dropDownActiveClass(toolbarState.isUppercase)
               }
@@ -1178,9 +1212,9 @@ export default function ToolbarPlugin({
             </DropDownItem>
             <Divider />
             <DropDownItem
-              onClick={() => {
-                activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'highlight');
-              }}
+              onClick={(e) =>
+                dispatchFormatTextCommand('highlight', isKeyboardInput(e))
+              }
               className={
                 'item wide ' + dropDownActiveClass(toolbarState.isHighlight)
               }
@@ -1192,7 +1226,7 @@ export default function ToolbarPlugin({
               </div>
             </DropDownItem>
             <DropDownItem
-              onClick={() => clearFormatting(activeEditor)}
+              onClick={(e) => clearFormatting(activeEditor, isKeyboardInput(e))}
               className="item wide"
               title="Clear text formatting"
               aria-label="Clear all text formatting">
@@ -1282,20 +1316,15 @@ export default function ToolbarPlugin({
                 )}
                 <Divider />
                 <DropDownItem
-                  onClick={() => {
-                    activeEditor.dispatchCommand(
-                      INSERT_HORIZONTAL_RULE_COMMAND,
-                      undefined,
-                    );
-                  }}
+                  onClick={() =>
+                    dispatchToolbarCommand(INSERT_HORIZONTAL_RULE_COMMAND)
+                  }
                   className="item">
                   <i className="icon horizontal-rule" />
                   <span className="text">Divider</span>
                 </DropDownItem>
                 <DropDownItem
-                  onClick={() => {
-                    activeEditor.dispatchCommand(INSERT_PAGE_BREAK, undefined);
-                  }}
+                  onClick={() => dispatchToolbarCommand(INSERT_PAGE_BREAK)}
                   className="item">
                   <i className="icon page-break" />
                   <span className="text">Page Break</span>

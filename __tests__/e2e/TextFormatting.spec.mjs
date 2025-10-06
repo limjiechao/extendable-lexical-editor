@@ -858,6 +858,7 @@ test.describe.parallel('TextFormatting', () => {
       focusPath: [0, 0, 0],
     });
 
+    await click(page, '.font-size-input');
     await fill(page, isCollab, '.font-size-input', '20');
     await page.keyboard.press('Enter');
 
