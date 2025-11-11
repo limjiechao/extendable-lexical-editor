@@ -37,7 +37,7 @@ export type ToolbarButton = ReactNode;
 export type InsertMenuItem = ReactNode;
 export type NodeContextMenuOption = NodeContextMenuOptionType;
 
-export type ConfigurableEditorProps = {
+export type ExtendableEditorProps = {
   collabDocId: string;
   name: string;
   namespace: string;
@@ -52,7 +52,7 @@ export type ConfigurableEditorProps = {
   contextMenuItems?: NodeContextMenuOption[];
 };
 
-export default function ConfigurableEditor({
+export default function ExtendableEditor({
   collabDocId,
   name,
   namespace,
@@ -65,7 +65,7 @@ export default function ConfigurableEditor({
   toolbarButtons,
   insertMenuItems,
   contextMenuItems,
-}: ConfigurableEditorProps): JSX.Element {
+}: ExtendableEditorProps): JSX.Element {
   const extension = useMemo(
     () =>
       defineExtension({
