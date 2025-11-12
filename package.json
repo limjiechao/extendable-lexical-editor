@@ -8,9 +8,8 @@
     "./context-menu-plugin.tsx": "./src/plugins/ContextMenuPlugin/index.tsx",
     "./toolbar-context.tsx": "./src/context/ToolbarContext.tsx",
     "./shared-history-context.tsx": "./src/context/SharedHistoryContext.tsx",
-    "./doc-serialization.ts": "./src/utils/docSerialization.ts",
     "./editor-theme.ts": "./src/themes/PlaygroundEditorTheme.ts",
-    "./nodes.tsx": "./src/nodes/PlaygroundNodes.tsx"
+    "./editor-nodes.ts": "./src/nodes/PlaygroundNodes.ts"
   },
   "files": [
     "src"
