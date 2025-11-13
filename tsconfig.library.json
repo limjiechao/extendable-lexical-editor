@@ -1,0 +1,25 @@
+{
+  "extends": "@tsconfig/strictest/tsconfig.json",
+  "compilerOptions": {
+    "target": "esnext",
+    "jsx": "react-jsx",
+    "lib": ["esnext", "dom", "dom.iterable", "ESNext.Disposable"],
+    "moduleDetection": "force",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "types": [],
+    "typeRoots": ["node_modules/@types", "libdefs/globals"],
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src"],
+  "exclude": [
+    "./libdefs/*.cjs",
+    "**/build/**",
+    "**/dist/**",
+    "**/npm/**",
+    "**/node_modules/**"
+  ]
+}
