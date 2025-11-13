@@ -11,7 +11,7 @@
  * @type {import('lint-staged').Configuration}
  */
 export default {
-  '*.{mjs,mts,js,ts,jsx,tsx,json}': ['prettier --write .'],
+  '*.{mjs,mts,js,ts,jsx,tsx,json,css}': ['prettier --write .'],
   '*.{mjs,mts,js,ts,jsx,tsx}': ['eslint ./'],
   '*.{mts,ts,tsx}': () => 'tsc --noEmit',
 };

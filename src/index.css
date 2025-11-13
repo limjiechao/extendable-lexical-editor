@@ -6,33 +6,6 @@
  *
  */
 
-header {
-  max-width: 580px;
-  margin: auto;
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-header a {
-  max-width: 220px;
-  margin: 20px 0 0 0;
-  display: block;
-}
-
-header img {
-  display: block;
-  height: 100%;
-  width: 100%;
-}
-
-header h1 {
-  text-align: left;
-  color: #333;
-  display: inline-block;
-  margin: 20px 0 0 0;
-}
-
 .editor-shell {
   margin: 20px auto;
   border-radius: 2px;
@@ -84,17 +57,6 @@ header h1 {
   width: 100%;
 }
 
-pre {
-  line-height: 1.1;
-  background: #222;
-  color: #fff;
-  margin: 0;
-  padding: 10px;
-  font-size: 12px;
-  overflow: auto;
-  max-height: 400px;
-}
-
 .tree-view-output {
   display: block;
   background: #222;
@@ -108,13 +70,26 @@ pre {
   border-bottom-right-radius: 10px;
 }
 
-pre::-webkit-scrollbar {
-  background: transparent;
-  width: 10px;
-}
+.tree-view-output > pre,
+#paste-log-button + pre#paste-log,
+.test-recorder-output > pre#test-recorder {
+  line-height: 1.1;
+  background: #222;
+  color: #fff;
+  margin: 0;
+  padding: 10px;
+  font-size: 12px;
+  overflow: auto;
+  max-height: 400px;
 
-pre::-webkit-scrollbar-thumb {
-  background: #999;
+  &::-webkit-scrollbar {
+    background: transparent;
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #999;
+  }
 }
 
 .editor-dev-button {
