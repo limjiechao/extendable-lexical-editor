@@ -34,6 +34,19 @@ import {ToolbarContext} from '../context/ToolbarContext';
 import Editor from '../Editor';
 import {TableContext} from '../plugins/TablePlugin';
 
+const DEFAULT_EXTENDABLE_EDITOR_SETTINGS: Settings = {
+  ...DEFAULT_SETTINGS,
+  disableBeforeInput: false,
+  emptyEditor: true,
+  hasCodeBlocks: false,
+  hasCodeSnippets: false,
+  hasComments: false,
+  hasEquations: false,
+  hasSampleImage: false,
+  shouldShowActions: false,
+  shouldUseLexicalContextMenu: true,
+};
+
 type FeatureConfig = Partial<Settings>;
 
 export type ToolbarButton = ReactNode;
@@ -92,7 +105,7 @@ export default function ExtendableEditor({
   );
 
   const mergedFeatures: Settings = {
-    ...DEFAULT_SETTINGS,
+    ...DEFAULT_EXTENDABLE_EDITOR_SETTINGS,
     ...(features ?? {}),
   };
 
