@@ -7,9 +7,7 @@
  */
 
 const hostName = window.location.hostname;
-export const isDevPlayground: boolean =
-  hostName !== 'playground.lexical.dev' &&
-  hostName !== 'lexical-playground.vercel.app';
+export const isDevPlayground: boolean = hostName.endsWith('vercel.app');
 
 export const DEFAULT_SETTINGS = {
   disableBeforeInput: false,
