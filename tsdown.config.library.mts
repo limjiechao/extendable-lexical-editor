@@ -119,15 +119,47 @@ function convertAssetIntoDataUrl() {
   };
 }
 
-export default defineConfig({
-  dts: true,
-  entry: [
-    './src/library/ExtendableEditor.tsx',
-    './src/themes/PlaygroundEditorTheme.ts',
-    './src/nodes/PlaygroundNodes.ts',
-  ],
-  external: ['react', 'react-dom', 'lexical', /^@lexical\//],
-  platform: 'neutral',
-  plugins: [convertAssetIntoDataUrl()],
-  tsconfig: './tsconfig.library.json',
-});
+export default defineConfig([
+  {
+    copy: [
+      {
+        from: './src/types/README.md',
+        to: 'dist/types/README.md',
+      },
+      {
+        from: './src/types/LexicalSchemaSample.lexical',
+        to: 'dist/types/LexicalSchemaSample.lexical',
+      },
+    ],
+    dts: {
+      emitDtsOnly: true,
+      /*
+       * Inline all referenced type definitions into the output .d.ts file
+       * To restrict inlining to just Lexical types:
+       * ```
+       * resolve: [/^lexical$/, /^@lexical\//],
+       * ```
+       */
+      resolve: true,
+      resolver: 'tsc',
+    },
+    entry: ['./src/types/LexicalSchema.ts'],
+    outDir: 'dist/types',
+    platform: 'neutral',
+    plugins: [convertAssetIntoDataUrl()],
+    tsconfig: './tsconfig.library.json',
+  },
+  {
+    dts: true,
+    entry: [
+      './src/library/ExtendableEditor.tsx',
+      './src/themes/PlaygroundEditorTheme.ts',
+      './src/nodes/PlaygroundNodes.ts',
+    ],
+    external: ['react', 'react-dom', 'lexical', /^@lexical\//],
+    outDir: 'dist',
+    platform: 'neutral',
+    plugins: [convertAssetIntoDataUrl()],
+    tsconfig: './tsconfig.library.json',
+  },
+]);

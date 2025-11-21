@@ -5,13 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-
-const hostName = window.location.hostname;
-export const isDevPlayground: boolean = hostName.endsWith('vercel.app');
-
 export const DEFAULT_SETTINGS = {
   disableBeforeInput: false,
-  emptyEditor: isDevPlayground,
+  emptyEditor: false,
   hasCodeBlocks: false,
   hasCodeSnippets: false,
   hasComments: false,
@@ -26,6 +22,7 @@ export const DEFAULT_SETTINGS = {
   isCodeShiki: false,
   isCollab: false,
   isMaxLength: false,
+  isPlaygroundMode: true,
   isRichText: true,
   listStrictIndent: false,
   measureTypingPerf: false,

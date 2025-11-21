@@ -43,6 +43,7 @@ const DEFAULT_EXTENDABLE_EDITOR_SETTINGS: Settings = {
   hasComments: false,
   hasEquations: false,
   hasSampleImage: false,
+  isPlaygroundMode: false,
   shouldShowActions: false,
   shouldUseLexicalContextMenu: true,
   showTreeView: false,

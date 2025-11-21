@@ -11,7 +11,7 @@ import type {JSX} from 'react';
 import {CAN_USE_BEFORE_INPUT} from '@lexical/utils';
 import {useEffect, useMemo, useState} from 'react';
 
-import {INITIAL_SETTINGS, isDevPlayground} from './appSettings';
+import {INITIAL_SETTINGS} from './appSettings';
 import {useSettings} from './context/SettingsContext';
 import Switch from './ui/Switch';
 
@@ -22,6 +22,7 @@ export default function Settings(): JSX.Element {
     settings: {
       measureTypingPerf,
       isCollab,
+      isPlaygroundMode,
       isRichText,
       isMaxLength,
       hasCodeBlocks,
@@ -72,7 +73,7 @@ export default function Settings(): JSX.Element {
       />
       {showSettings ? (
         <div className="switches">
-          {isRichText && isDevPlayground && (
+          {isRichText && isPlaygroundMode && (
             <Switch
               onClick={() => {
                 setOption('isCollab', !isCollab);
@@ -82,7 +83,7 @@ export default function Settings(): JSX.Element {
               text="Collaboration"
             />
           )}
-          {isDevPlayground && (
+          {isPlaygroundMode && (
             <Switch
               onClick={() => {
                 if (isSplitScreen) {

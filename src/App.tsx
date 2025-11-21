@@ -19,7 +19,6 @@ import {
 } from 'lexical';
 import {type JSX, useMemo} from 'react';
 
-import {isDevPlayground} from './appSettings';
 import {buildHTMLConfig} from './buildHTMLConfig';
 import {FlashMessageContext} from './context/FlashMessageContext';
 import {SettingsContext, useSettings} from './context/SettingsContext';
@@ -122,7 +121,7 @@ function $prepopulatedRichText() {
 
 function App(): JSX.Element {
   const {
-    settings: {isCollab, emptyEditor, measureTypingPerf},
+    settings: {isCollab, emptyEditor, measureTypingPerf, isPlaygroundMode},
   } = useSettings();
 
   const app = useMemo(
@@ -157,9 +156,9 @@ function App(): JSX.Element {
                 <Editor />
               </div>
               <Settings />
-              {isDevPlayground ? <DocsPlugin /> : null}
-              {isDevPlayground ? <PasteLogPlugin /> : null}
-              {isDevPlayground ? <TestRecorderPlugin /> : null}
+              {isPlaygroundMode ? <DocsPlugin /> : null}
+              {isPlaygroundMode ? <PasteLogPlugin /> : null}
+              {isPlaygroundMode ? <TestRecorderPlugin /> : null}
 
               {measureTypingPerf ? <TypingPerfPlugin /> : null}
             </ToolbarContext>

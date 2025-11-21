@@ -20,11 +20,10 @@
       "types": "./dist/themes/PlaygroundEditorTheme.d.mts"
     },
     "./extendable-editor.css": "./dist/library/main.css",
-    "./lexical-schema": "./types/LexicalSchema.d.ts"
+    "./lexical-schema": "./dist/types/LexicalSchema.d.mts"
   },
   "files": [
-    "dist",
-    "types"
+    "dist"
   ],
   "scripts": {
     "start-playground": "concurrently \"npm:collab-playground\" \"npm:dev-playground\"",

@@ -11,7 +11,10 @@
     "types": [],
     "typeRoots": ["node_modules/@types", "libdefs/globals"],
     "declaration": true,
+    "declarationMap": false,
     "emitDeclarationOnly": true,
+    "isolatedDeclarations": true, // uses oxc-transform for very fast DTS generation:contentReference[oaicite:0]{index=0}
+    "strict": true,
     "verbatimModuleSyntax": true
   },
   "include": ["src"],
