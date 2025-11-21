@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
+@layer node, plugin, ui, theme;
 @import './index.css' layer(editor);
-@layer editor, playground;
 
 @layer playground {
   :root {

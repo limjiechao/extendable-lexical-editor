@@ -6,6 +6,7 @@
  *
  *
  */
+@layer theme;
 
 .CommentEditorTheme__paragraph {
   margin: 0;

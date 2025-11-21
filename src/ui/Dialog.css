@@ -4,21 +4,23 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
+ *
  */
+@layer ui {
+  .DialogActions {
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+    margin-top: 20px;
+  }
 
-.DialogActions {
-  display: flex;
-  flex-direction: row;
-  justify-content: right;
-  margin-top: 20px;
-}
+  .DialogButtonsList {
+    display: flex;
+    flex-direction: column;
+    justify-content: right;
+  }
 
-.DialogButtonsList {
-  display: flex;
-  flex-direction: column;
-  justify-content: right;
-}
-
-.DialogButtonsList button {
-  margin-bottom: 20px;
+  .DialogButtonsList button {
+    margin-bottom: 20px;
+  }
 }

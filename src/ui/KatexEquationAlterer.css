@@ -6,42 +6,43 @@
  *
  *
  */
+@layer ui {
+  .KatexEquationAlterer_defaultRow {
+    display: flex;
+    flex-direction: row;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    justify-content: space-between;
+    overflow: hidden;
+  }
 
-.KatexEquationAlterer_defaultRow {
-  display: flex;
-  flex-direction: row;
-  margin-top: 16px;
-  margin-bottom: 16px;
-  justify-content: space-between;
-  overflow: hidden;
-}
+  .KatexEquationAlterer_defaultRow:first-child {
+    margin-top: 0px;
+  }
 
-.KatexEquationAlterer_defaultRow:first-child {
-  margin-top: 0px;
-}
+  .KatexEquationAlterer_dialogActions {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    margin-top: 20px;
+    margin-bottom: 0;
+    justify-content: right;
+  }
 
-.KatexEquationAlterer_dialogActions {
-  display: flex;
-  flex-direction: row;
-  overflow: hidden;
-  margin-top: 20px;
-  margin-bottom: 0;
-  justify-content: right;
-}
+  .KatexEquationAlterer_centerRow {
+    display: flex;
+    flex-direction: 'row';
+    margin-top: 0;
+    margin-bottom: 0;
+    justify-content: center;
+    overflow: hidden;
+  }
 
-.KatexEquationAlterer_centerRow {
-  display: flex;
-  flex-direction: 'row';
-  margin-top: 0;
-  margin-bottom: 0;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.KatexEquationAlterer_textArea {
-  width: 100%;
-  resize: none;
-  padding: 7px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  .KatexEquationAlterer_textArea {
+    width: 100%;
+    resize: none;
+    padding: 7px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
 }

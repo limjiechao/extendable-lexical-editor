@@ -6,8 +6,9 @@
  *
  *
  */
-
-.StickyEditorTheme__paragraph {
-  margin: 0;
-  position: relative;
+@layer theme {
+  .StickyEditorTheme__paragraph {
+    margin: 0;
+    position: relative;
+  }
 }

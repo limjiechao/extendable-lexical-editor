@@ -1,26 +1,35 @@
-.FootnoteDialog {
-  position: relative;
-  font-size: 14px;
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+@layer plugin {
+  .FootnoteDialog {
+    position: relative;
+    font-size: 14px;
 
-  & > .FootnoteDialog__editor {
-    border-radius: 8px;
-    border: 2px solid #ccc;
-    min-height: 8rem;
-    max-height: 20rem;
-    min-width: 16rem;
-    max-width: 24rem;
-    padding: 6px;
-    overflow-y: auto;
-  }
+    & > .FootnoteDialog__editor {
+      border-radius: 8px;
+      border: 2px solid #ccc;
+      min-height: 8rem;
+      max-height: 20rem;
+      min-width: 16rem;
+      max-width: 24rem;
+      padding: 6px;
+      overflow-y: auto;
+    }
 
-  & .FootnoteDialog__editor-placeholder {
-    opacity: 0.5;
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    user-select: none;
-    white-space: nowrap;
-    display: inline-block;
-    pointer-events: none;
+    & .FootnoteDialog__editor-placeholder {
+      opacity: 0.5;
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      user-select: none;
+      white-space: nowrap;
+      display: inline-block;
+      pointer-events: none;
+    }
   }
 }

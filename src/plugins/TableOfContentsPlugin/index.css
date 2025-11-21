@@ -5,79 +5,80 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
+@layer plugin {
+  .table-of-contents .heading2 {
+    margin-left: 10px;
+  }
 
-.table-of-contents .heading2 {
-  margin-left: 10px;
-}
+  .table-of-contents .heading3 {
+    margin-left: 20px;
+  }
 
-.table-of-contents .heading3 {
-  margin-left: 20px;
-}
+  .selected-heading {
+    font-weight: bold;
+    color: #3578e5;
+    position: relative;
+  }
 
-.selected-heading {
-  font-weight: bold;
-  color: #3578e5;
-  position: relative;
-}
+  .normal-heading {
+    cursor: pointer;
+    line-height: 20px;
+    font-size: 14px;
+    letter-spacing: 0.0005ch;
+  }
 
-.normal-heading {
-  cursor: pointer;
-  line-height: 20px;
-  font-size: 14px;
-  letter-spacing: 0.0005ch;
-}
+  .table-of-contents {
+    color: #65676b;
+    position: fixed;
+    top: 0;
+    right: 0px;
+    padding: 0 10px 0 0;
+    width: var(--table-of-contents-width);
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    z-index: var(--side-panel-z-index);
+    background-color: var(--side-panel-background-color);
+    height: 100svh;
+    text-wrap: pretty;
+  }
 
-.table-of-contents {
-  color: #65676b;
-  position: fixed;
-  top: 0;
-  right: 0px;
-  padding: 0 10px 0 0;
-  width: var(--table-of-contents-width);
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  z-index: var(--side-panel-z-index);
-  background-color: var(--side-panel-background-color);
-  height: 100svh;
-  text-wrap: pretty;
-}
+  .first-heading {
+    padding-block-start: 8px;
+    font-size: 14px;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+  }
 
-.first-heading {
-  padding-block-start: 8px;
-  font-size: 14px;
-  color: black;
-  font-weight: bold;
-  cursor: pointer;
-}
+  .headings {
+    --headings-top-padding: var(--header-height);
+    --headings-bottom-padding: var(--bottom-button-group-height);
+    --headings-height: calc(
+      100svh - var(--headings-top-padding) - var(--headings-bottom-padding)
+    );
+    list-style: none;
+    margin-top: 0;
+    margin-left: 0;
+    padding: var(--headings-top-padding) 0 var(--headings-bottom-padding) 0;
+    overflow: scroll;
+    height: var(--headings-height);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
 
-.headings {
-  --headings-top-padding: var(--header-height);
-  --headings-bottom-padding: var(--bottom-button-group-height);
-  --headings-height: calc(
-    100svh - var(--headings-top-padding) - var(--headings-bottom-padding)
-  );
-  list-style: none;
-  margin-top: 0;
-  margin-left: 0;
-  padding: var(--headings-top-padding) 0 var(--headings-bottom-padding) 0;
-  overflow: scroll;
-  height: var(--headings-height);
-  overflow-x: hidden;
-  overflow-y: auto;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .headings::-webkit-scrollbar {
+    display: none;
+  }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.headings::-webkit-scrollbar {
-  display: none;
-}
-
-.normal-heading-wrapper {
-  margin-left: 24px;
-  position: relative;
+  .normal-heading-wrapper {
+    margin-left: 24px;
+    position: relative;
+  }
 }
