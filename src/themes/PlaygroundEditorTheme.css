@@ -418,6 +418,7 @@
   .PlaygroundEditorTheme__ol1 {
     padding: 0;
     margin: 0;
+    list-style-type: decimal;
     list-style-position: outside;
   }
   .PlaygroundEditorTheme__ol2 {
@@ -447,6 +448,7 @@
   .PlaygroundEditorTheme__ul {
     padding: 0;
     margin: 0;
+    list-style-type: disc;
     list-style-position: outside;
   }
   .PlaygroundEditorTheme__listItem {
