@@ -1,22 +1,11 @@
 /* NOTE: This file enables bundling of all CSS files needed `<ExtendableEditor />` */
 
-@import '../index.css';
-@import '../themes/CommentEditorTheme.css';
-@import '../themes/PlaygroundEditorTheme.css';
-@import '../themes/StickyEditorTheme.css';
+/* Declare definitive layer order */
+@layer node, plugin, ui, theme, editor;
+
 @import '../nodes/FootnoteNode.css';
 @import '../nodes/ImageNode.css';
 @import '../nodes/PageBreakNode/index.css';
-@import '../ui/Button.css';
-@import '../ui/ContentEditable.css';
-@import '../ui/ColorPicker.css';
-@import '../ui/Dialog.css';
-@import '../ui/EquationEditor.css';
-@import '../ui/FlashMessage.css';
-@import '../ui/Input.css';
-@import '../ui/KatexEquationAlterer.css';
-@import '../ui/Modal.css';
-@import '../ui/Select.css';
 @import '../plugins/CodeActionMenuPlugin/index.css';
 @import '../plugins/CodeActionMenuPlugin/components/PrettierButton/index.css';
 @import '../plugins/CommentPlugin/index.css';
@@ -28,3 +17,17 @@
 @import '../plugins/TableOfContentsPlugin/index.css';
 @import '../plugins/ToolbarPlugin/fontSize.css';
 @import '../plugins/VersionsPlugin/index.css';
+@import '../ui/Button.css';
+@import '../ui/ContentEditable.css';
+@import '../ui/ColorPicker.css';
+@import '../ui/Dialog.css';
+@import '../ui/EquationEditor.css';
+@import '../ui/FlashMessage.css';
+@import '../ui/Input.css';
+@import '../ui/KatexEquationAlterer.css';
+@import '../ui/Modal.css';
+@import '../ui/Select.css';
+@import '../themes/CommentEditorTheme.css';
+@import '../themes/PlaygroundEditorTheme.css';
+@import '../themes/StickyEditorTheme.css';
+@import '../index.css';
