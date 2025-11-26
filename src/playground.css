@@ -5,9 +5,13 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-@layer node, plugin, ui, theme;
-@import './index.css' layer(editor);
+/* Declare definitive layer order */
+@layer node, plugin, ui, theme, editor, playground;
 
+/* Import editor layer */
+@import './index.css';
+
+/* Styles specific to Lexical Playground only */
 @layer playground {
   :root {
     --header-height: 88px;
