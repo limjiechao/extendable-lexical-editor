@@ -6,9 +6,9 @@
  *
  *
  */
-@layer theme;
-
-.CommentEditorTheme__paragraph {
-  margin: 0;
-  position: relative;
+@layer theme {
+  .CommentEditorTheme__paragraph {
+    margin: 0;
+    position: relative;
+  }
 }
