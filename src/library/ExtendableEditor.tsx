@@ -19,6 +19,7 @@ import {LexicalCollaboration} from '@lexical/react/LexicalCollaborationContext';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {LexicalExtensionComposer} from '@lexical/react/LexicalExtensionComposer';
 import {OnChangePlugin} from '@lexical/react/LexicalOnChangePlugin';
+import {NODE_STATE_KEY} from 'lexical';
 import {
   defineExtension,
   type EditorThemeClasses,
@@ -33,6 +34,8 @@ import {SharedHistoryContext} from '../context/SharedHistoryContext';
 import {ToolbarContext} from '../context/ToolbarContext';
 import Editor from '../Editor';
 import {TableContext} from '../plugins/TablePlugin';
+
+export {NODE_STATE_KEY};
 
 const DEFAULT_EXTENDABLE_EDITOR_SETTINGS: Settings = {
   ...DEFAULT_SETTINGS,

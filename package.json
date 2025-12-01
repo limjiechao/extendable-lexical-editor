@@ -11,6 +11,10 @@
       "import": "./dist/library/ExtendableEditor.mjs",
       "types": "./dist/library/ExtendableEditor.d.mts"
     },
+    "./extendable-editor-utils": {
+      "import": "./dist/library/extendableEditorUtils.mjs",
+      "types": "./dist/library/extendableEditorUtils.d.mts"
+    },
     "./editor-nodes": {
       "import": "./dist/nodes/PlaygroundNodes.mjs",
       "types": "./dist/nodes/PlaygroundNodes.d.mts"

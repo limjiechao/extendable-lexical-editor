@@ -31,6 +31,7 @@ import type {
 import type {
   SerializedEditorState as SerializedEditorState$1,
   SerializedElementNode,
+  SerializedLexicalNode,
   SerializedTextNode,
 } from 'lexical';
 
@@ -106,4 +107,5 @@ export type {
   SerializedEditorNode,
   SerializedEditorState,
   SerializedElementNode,
+  SerializedLexicalNode,
 };

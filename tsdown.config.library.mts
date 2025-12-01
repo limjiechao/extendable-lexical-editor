@@ -153,6 +153,7 @@ export default defineConfig([
     dts: true,
     entry: [
       './src/library/ExtendableEditor.tsx',
+      './src/library/extendableEditorUtils.ts',
       './src/themes/PlaygroundEditorTheme.ts',
       './src/nodes/PlaygroundNodes.ts',
     ],
