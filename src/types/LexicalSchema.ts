@@ -30,6 +30,7 @@ import type {
 } from '@lexical/table';
 import type {
   SerializedEditorState as SerializedEditorState$1,
+  SerializedElementNode,
   SerializedTextNode,
 } from 'lexical';
 
@@ -100,4 +101,9 @@ interface SerializedDocument extends SerializedDocument$1 {
   version: string;
 }
 
-export type {SerializedDocument, SerializedEditorNode, SerializedEditorState};
+export type {
+  SerializedDocument,
+  SerializedEditorNode,
+  SerializedEditorState,
+  SerializedElementNode,
+};
