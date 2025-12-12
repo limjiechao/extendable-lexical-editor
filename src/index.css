@@ -1507,7 +1507,7 @@
   }
 
   .dialog-dropdown {
-    background-color: #eee !important;
+    background-color: #eee;
     margin-bottom: 10px;
     width: 100%;
   }
