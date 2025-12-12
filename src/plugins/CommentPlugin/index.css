@@ -145,6 +145,13 @@
     display: block;
     padding: 9px 10px 10px 9px;
     min-height: 80px;
+
+    & + div[aria-hidden='true'] {
+      & > .ContentEditable__placeholder {
+        top: 10px;
+        left: 10px;
+      }
+    }
   }
 
   .CommentPlugin_CommentInputBox_Editor:focus {
@@ -235,6 +242,13 @@
     display: block;
     padding: 9px 10px 10px 9px;
     min-height: 20px;
+
+    & + div[aria-hidden='true'] {
+      & > .ContentEditable__placeholder {
+        top: 10px;
+        left: 10px;
+      }
+    }
   }
 
   .CommentPlugin_CommentsPanel_Editor::before {
