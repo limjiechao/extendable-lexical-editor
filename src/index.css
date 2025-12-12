@@ -576,6 +576,19 @@
     background-image: url(images/icons/footnote.svg);
   }
 
+  i.start-new-list {
+    background-image: url(images/icons/start-new-list.svg);
+  }
+
+  i.continue-numbering {
+    background-image: url(images/icons/continue-numbering.svg);
+  }
+
+  i.set-numbering-value,
+  span.set-numbering-value {
+    background-image: url(images/icons/set-numbering-value.svg);
+  }
+
   .link-editor .button.active,
   .toolbar .button.active {
     background-color: rgb(223, 232, 250);

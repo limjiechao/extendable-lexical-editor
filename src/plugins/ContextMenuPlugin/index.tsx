@@ -9,6 +9,7 @@
 import type {JSX} from 'react';
 
 import {$isLinkNode, TOGGLE_LINK_COMMAND} from '@lexical/link';
+import {$isListNode} from '@lexical/list';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {
   NodeContextMenuOption,
@@ -27,15 +28,66 @@ import {
 } from 'lexical';
 import {useMemo} from 'react';
 
+import useModal from '../../hooks/useModal';
+import {
+  CONTINUE_ORDERED_LIST,
+  NumberedListDialog,
+  START_NEW_ORDERED_LIST,
+} from '../OrderedListManualRenumberingPlugin';
+
 export default function ContextMenuPlugin({
   items: extraItems,
 }: {
   items?: Array<NodeContextMenuOption | NodeContextMenuSeparator>;
 } = {}): JSX.Element {
   const [editor] = useLexicalComposerContext();
+  const [modal, showModal] = useModal();
 
   const items = useMemo(() => {
+    const $isOrderedListContext = (node: LexicalNode): boolean => {
+      let nextNode: LexicalNode | null = node;
+      while (nextNode) {
+        if ($isListNode(nextNode) && nextNode.getListType() === 'number') {
+          return true;
+        }
+        nextNode = nextNode.getParent();
+      }
+      return false;
+    };
     const base = [
+      new NodeContextMenuOption(`Start New List`, {
+        $onSelect: () =>
+          editor.dispatchCommand(START_NEW_ORDERED_LIST, undefined),
+        $showOn: (node: LexicalNode) => $isOrderedListContext(node),
+        disabled: false,
+        icon: (
+          <i className="PlaygroundEditorTheme__contextMenuItemIcon start-new-list" />
+        ),
+      }),
+      new NodeContextMenuOption(`Continue Numbering`, {
+        $onSelect: () =>
+          editor.dispatchCommand(CONTINUE_ORDERED_LIST, undefined),
+        $showOn: (node: LexicalNode) => $isOrderedListContext(node),
+        disabled: false,
+        icon: (
+          <i className="PlaygroundEditorTheme__contextMenuItemIcon continue-numbering" />
+        ),
+      }),
+      new NodeContextMenuOption(`Set Numbering Value…`, {
+        $onSelect: () => {
+          showModal('Set numbering value', (onClose) => (
+            <NumberedListDialog activeEditor={editor} onClose={onClose} />
+          ));
+        },
+        $showOn: (node: LexicalNode) => $isOrderedListContext(node),
+        disabled: false,
+        icon: (
+          <i className="PlaygroundEditorTheme__contextMenuItemIcon set-numbering-value" />
+        ),
+      }),
+      new NodeContextMenuSeparator({
+        $showOn: (node: LexicalNode) => $isOrderedListContext(node),
+      }),
       new NodeContextMenuOption(`Remove Link`, {
         $onSelect: () => {
           editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
@@ -151,14 +203,17 @@ export default function ContextMenuPlugin({
     ];
     const extras = Array.isArray(extraItems) ? extraItems : [];
     return [...base, ...extras];
-  }, [editor, extraItems]);
+  }, [editor, extraItems, showModal]);
 
   return (
-    <NodeContextMenuPlugin
-      className="PlaygroundEditorTheme__contextMenu"
-      itemClassName="PlaygroundEditorTheme__contextMenuItem"
-      separatorClassName="PlaygroundEditorTheme__contextMenuSeparator"
-      items={items}
-    />
+    <>
+      <NodeContextMenuPlugin
+        className="PlaygroundEditorTheme__contextMenu"
+        itemClassName="PlaygroundEditorTheme__contextMenuItem"
+        separatorClassName="PlaygroundEditorTheme__contextMenuSeparator"
+        items={items}
+      />
+      {modal}
+    </>
   );
 }

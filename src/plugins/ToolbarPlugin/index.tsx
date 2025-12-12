@@ -81,6 +81,11 @@ import {sanitizeUrl} from '../../utils/url';
 import {InsertEquationDialog} from '../EquationsPlugin';
 import {InsertImageDialog} from '../ImagesPlugin';
 import InsertLayoutDialog from '../LayoutPlugin/InsertLayoutDialog';
+import {
+  CONTINUE_ORDERED_LIST,
+  NumberedListDialog,
+  START_NEW_ORDERED_LIST,
+} from '../OrderedListManualRenumberingPlugin';
 import {INSERT_PAGE_BREAK} from '../PageBreakPlugin';
 import {SHORTCUTS} from '../ShortcutsPlugin/shortcuts';
 import {InsertTableDialog} from '../TablePlugin';
@@ -948,6 +953,48 @@ export default function ToolbarPlugin({
             <Divider />
           </>
         )}
+      {toolbarState.blockType === 'number' && (
+        <DropDown
+          buttonClassName="toolbar-item block-controls"
+          buttonIconClassName="icon block-type set-numbering-value"
+          buttonAriaLabel="Formatting options for numbered list">
+          <DropDownItem
+            className="item wide"
+            onClick={() =>
+              editor.dispatchCommand(START_NEW_ORDERED_LIST, undefined)
+            }>
+            <div className="icon-text-container">
+              <i className="icon start-new-list" />
+              <span className="text">Start New List</span>
+            </div>
+          </DropDownItem>
+          <DropDownItem
+            className="item wide"
+            onClick={() =>
+              editor.dispatchCommand(CONTINUE_ORDERED_LIST, undefined)
+            }>
+            <div className="icon-text-container">
+              <i className="icon continue-numbering" />
+              <span className="text">Continue Numbering</span>
+            </div>
+          </DropDownItem>
+          <DropDownItem
+            className="item wide"
+            onClick={() => {
+              showModal('Set numbering value', (onClose) => (
+                <NumberedListDialog
+                  activeEditor={activeEditor}
+                  onClose={onClose}
+                />
+              ));
+            }}>
+            <div className="icon-text-container">
+              <i className="icon set-numbering-value" />
+              <span className="text">Set Numbering Value…</span>
+            </div>
+          </DropDownItem>
+        </DropDown>
+      )}
       {toolbarState.blockType === 'code' && isCodeHighlighted ? (
         <>
           {!isCodeShiki && (

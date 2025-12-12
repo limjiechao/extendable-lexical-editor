@@ -57,6 +57,7 @@ import {LayoutPlugin} from './plugins/LayoutPlugin/LayoutPlugin';
 import LinkPlugin from './plugins/LinkPlugin';
 import MarkdownShortcutPlugin from './plugins/MarkdownShortcutPlugin';
 import {MaxLengthPlugin} from './plugins/MaxLengthPlugin';
+import OrderedListManualRenumberingPlugin from './plugins/OrderedListManualRenumberingPlugin';
 import PageBreakPlugin from './plugins/PageBreakPlugin';
 import ShortcutsPlugin from './plugins/ShortcutsPlugin';
 import SpecialTextPlugin from './plugins/SpecialTextPlugin';
@@ -228,6 +229,7 @@ export default function Editor({
                 ))
               : null}
             <ListPlugin hasStrictIndent={listStrictIndent} />
+            <OrderedListManualRenumberingPlugin />
             <TablePlugin
               hasCellMerge={tableCellMerge}
               hasCellBackgroundColor={tableCellBackgroundColor}
