@@ -1337,18 +1337,18 @@ export default function ToolbarPlugin({
                 )}
                 <Divider />
                 <DropDownItem
+                  onClick={() => dispatchToolbarCommand(INSERT_PAGE_BREAK)}
+                  className="item">
+                  <i className="icon page-break" />
+                  <span className="text">Page Break</span>
+                </DropDownItem>
+                <DropDownItem
                   onClick={() =>
                     dispatchToolbarCommand(INSERT_HORIZONTAL_RULE_COMMAND)
                   }
                   className="item">
                   <i className="icon horizontal-rule" />
                   <span className="text">Divider</span>
-                </DropDownItem>
-                <DropDownItem
-                  onClick={() => dispatchToolbarCommand(INSERT_PAGE_BREAK)}
-                  className="item">
-                  <i className="icon page-break" />
-                  <span className="text">Page Break</span>
                 </DropDownItem>
                 <DropDownItem
                   onClick={() => {

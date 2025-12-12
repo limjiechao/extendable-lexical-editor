@@ -255,16 +255,16 @@ function getBaseOptions(
         editor.dispatchCommand(INSERT_FOOTNOTE_COMMAND, {value: ''});
       },
     }),
+    new ComponentPickerOption('Page Break', {
+      icon: <i className="icon page-break" />,
+      keywords: ['page break', 'divider'],
+      onSelect: () => editor.dispatchCommand(INSERT_PAGE_BREAK, undefined),
+    }),
     new ComponentPickerOption('Divider', {
       icon: <i className="icon horizontal-rule" />,
       keywords: ['horizontal rule', 'divider', 'hr'],
       onSelect: () =>
         editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined),
-    }),
-    new ComponentPickerOption('Page Break', {
-      icon: <i className="icon page-break" />,
-      keywords: ['page break', 'divider'],
-      onSelect: () => editor.dispatchCommand(INSERT_PAGE_BREAK, undefined),
     }),
     new ComponentPickerOption('Columns Layout', {
       icon: <i className="icon columns" />,
