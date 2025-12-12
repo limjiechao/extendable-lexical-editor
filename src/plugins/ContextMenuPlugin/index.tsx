@@ -52,9 +52,7 @@ export default function ContextMenuPlugin({
           editor.dispatchCommand(CUT_COMMAND, null);
         },
         disabled: false,
-        icon: (
-          <i className="PlaygroundEditorTheme__contextMenuItemIcon page-break" />
-        ),
+        icon: <i className="PlaygroundEditorTheme__contextMenuItemIcon cut" />,
       }),
       new NodeContextMenuOption(`Copy`, {
         $onSelect: () => {
@@ -121,7 +119,9 @@ export default function ContextMenuPlugin({
           });
         },
         disabled: false,
-        icon: <i className="PlaygroundEditorTheme__contextMenuItemIcon" />,
+        icon: (
+          <i className="PlaygroundEditorTheme__contextMenuItemIcon paste-text" />
+        ),
       }),
       new NodeContextMenuSeparator(),
       new NodeContextMenuOption(`Delete Node`, {

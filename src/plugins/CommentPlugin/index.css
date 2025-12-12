@@ -448,7 +448,7 @@
     height: 15px;
     width: 15px;
     vertical-align: -10px;
-    background-image: url(../../images/icons/trash3.svg);
+    background-image: url(../../images/icons/trash.svg);
     transition: opacity 0.2s linear;
   }
 }

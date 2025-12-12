@@ -537,6 +537,10 @@
     background-image: url(images/icons/calendar.svg);
   }
 
+  i.cut {
+    background-image: url(images/icons/cut.svg);
+  }
+
   i.copy {
     background-image: url(images/icons/copy.svg);
   }
@@ -559,7 +563,7 @@
 
   i.page-break,
   .icon.page-break {
-    background-image: url(images/icons/scissors.svg);
+    background-image: url(images/icons/page-break.svg);
   }
 
   i.footnote {
@@ -608,7 +612,7 @@
   }
 
   .link-editor div.link-edit {
-    background-image: url(images/icons/pencil-fill.svg);
+    background-image: url(images/icons/pencil.svg);
     background-size: 16px;
     background-position: center;
     background-repeat: no-repeat;
@@ -1046,7 +1050,7 @@
   .editor-shell .editor-image .image-edit-button {
     border: 1px solid rgba(0, 0, 0, 0.3);
     border-radius: 5px;
-    background-image: url(./images/icons/pencil-fill.svg);
+    background-image: url(./images/icons/pencil.svg);
     background-size: 16px;
     background-position: center;
     background-repeat: no-repeat;
