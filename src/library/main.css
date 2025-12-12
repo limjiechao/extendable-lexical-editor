@@ -1,7 +1,7 @@
 /* NOTE: This file enables bundling of all CSS files needed `<ExtendableEditor />` */
 
 /* Declare definitive layer order */
-@layer node, plugin, ui, theme, editor;
+@layer node, ui, plugin, theme, editor;
 
 @import '../nodes/FootnoteNode.css';
 @import '../nodes/ImageNode.css';

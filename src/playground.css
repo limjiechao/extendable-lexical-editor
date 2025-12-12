@@ -6,7 +6,7 @@
  *
  */
 /* Declare definitive layer order */
-@layer node, plugin, ui, theme, editor, playground;
+@layer node, ui, plugin, theme, editor, playground;
 
 /* Import editor layer */
 @import './index.css';
