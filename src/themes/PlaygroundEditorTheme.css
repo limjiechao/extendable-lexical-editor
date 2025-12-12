@@ -619,4 +619,11 @@
     background-repeat: no-repeat;
     background-size: contain;
   }
+  .PlaygroundEditorTheme__contextMenuSeparator {
+    border: none;
+    height: 1px;
+    background-color: #eee;
+    width: auto;
+    margin: 4px 8px;
+  }
 }
