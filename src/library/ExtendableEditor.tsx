@@ -30,6 +30,7 @@ import {type JSX, type ReactNode, useEffect, useMemo} from 'react';
 
 import {DEFAULT_SETTINGS, type Settings} from '../appSettings';
 import {buildHTMLConfig} from '../buildHTMLConfig';
+import {SettingsContext} from '../context/SettingsContext';
 import {SharedHistoryContext} from '../context/SharedHistoryContext';
 import {ToolbarContext} from '../context/ToolbarContext';
 import Editor from '../Editor';
@@ -115,43 +116,44 @@ export default function ExtendableEditor({
   };
 
   return (
-    <LexicalCollaboration>
-      <LexicalExtensionComposer extension={extension} contentEditable={null}>
-        <SharedHistoryContext>
-          <TableContext>
-            <ToolbarContext>
-              <div className="editor-shell">
-                <Editor
-                  config={mergedFeatures}
-                  collabDocId={collabDocId}
-                  toolbarButtons={toolbarButtons}
-                  contextMenuItems={contextMenuItems}
-                  insertDropdownItems={insertDropdownItems}
-                />
-                {onChangeDocument ? (
-                  <OnChangePlugin
-                    onChange={(editorState, _editor) => {
-                      onChangeDocument(
-                        serializedDocumentFromEditorState(editorState, {
-                          source: namespace,
-                        }),
-                      );
-                    }}
+    <SettingsContext initialSettings={mergedFeatures}>
+      <LexicalCollaboration>
+        <LexicalExtensionComposer extension={extension} contentEditable={null}>
+          <SharedHistoryContext>
+            <TableContext>
+              <ToolbarContext>
+                <div className="editor-shell">
+                  <Editor
+                    collabDocId={collabDocId}
+                    toolbarButtons={toolbarButtons}
+                    contextMenuItems={contextMenuItems}
+                    insertDropdownItems={insertDropdownItems}
                   />
-                ) : null}
-                {onSaveDocument ? (
-                  <SaveOnShortcutPlugin
-                    onSaveDocument={onSaveDocument}
-                    source={namespace}
-                  />
-                ) : null}
-                {children}
-              </div>
-            </ToolbarContext>
-          </TableContext>
-        </SharedHistoryContext>
-      </LexicalExtensionComposer>
-    </LexicalCollaboration>
+                  {onChangeDocument ? (
+                    <OnChangePlugin
+                      onChange={(editorState, _editor) => {
+                        onChangeDocument(
+                          serializedDocumentFromEditorState(editorState, {
+                            source: namespace,
+                          }),
+                        );
+                      }}
+                    />
+                  ) : null}
+                  {onSaveDocument ? (
+                    <SaveOnShortcutPlugin
+                      onSaveDocument={onSaveDocument}
+                      source={namespace}
+                    />
+                  ) : null}
+                  {children}
+                </div>
+              </ToolbarContext>
+            </TableContext>
+          </SharedHistoryContext>
+        </LexicalExtensionComposer>
+      </LexicalCollaboration>
+    </SettingsContext>
   );
 }
 

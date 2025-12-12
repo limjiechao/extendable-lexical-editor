@@ -6,7 +6,6 @@
  *
  */
 
-import type {Settings} from './appSettings';
 import type {NodeContextMenuOption as NodeContextMenuOptionType} from '@lexical/react/LexicalNodeContextMenuPlugin';
 
 import {AutoFocusPlugin} from '@lexical/react/LexicalAutoFocusPlugin';
@@ -77,20 +76,18 @@ const skipCollaborationInit =
   window.parent != null && window.parent.frames.right === window;
 
 export default function Editor({
-  config,
   toolbarButtons,
   insertDropdownItems,
   contextMenuItems,
   collabDocId,
 }: {
-  config?: Partial<Settings>;
   toolbarButtons?: ReactNode[];
   insertDropdownItems?: ReactNode[];
   contextMenuItems?: NodeContextMenuOptionType[];
   collabDocId?: string;
 } = {}): JSX.Element {
   const {historyState} = useSharedHistoryContext();
-  const settingsContext = useSettings();
+  const {settings} = useSettings();
   const {
     isCodeHighlighted,
     isCodeShiki,
@@ -117,12 +114,7 @@ export default function Editor({
     shouldAllowHighlightingWithBrackets,
     selectionAlwaysOnDisplay,
     listStrictIndent,
-  } = useMemo(() => {
-    return {
-      ...(settingsContext.settings as Settings),
-      ...(config ?? {}),
-    };
-  }, [config, settingsContext.settings]);
+  } = useMemo(() => settings, [settings]);
   const isEditable = useLexicalEditable();
   const placeholder = isCollab
     ? 'Enter some collaborative rich text...'

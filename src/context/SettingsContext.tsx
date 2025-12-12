@@ -6,7 +6,7 @@
  *
  */
 
-import type {SettingName} from '../appSettings';
+import type {SettingName, Settings} from '../appSettings';
 import type {JSX} from 'react';
 
 import * as React from 'react';
@@ -35,10 +35,15 @@ const Context: React.Context<SettingsContextShape> = createContext({
 
 export const SettingsContext = ({
   children,
+  initialSettings = {},
 }: {
   children: ReactNode;
+  initialSettings?: Partial<Settings>;
 }): JSX.Element => {
-  const [settings, setSettings] = useState(INITIAL_SETTINGS);
+  const [settings, setSettings] = useState({
+    ...INITIAL_SETTINGS,
+    ...initialSettings,
+  });
 
   const setOption = useCallback((setting: SettingName, value: boolean) => {
     setSettings((options) => ({
