@@ -551,6 +551,10 @@
     background-image: url(images/icons/clipboard.svg);
   }
 
+  i.paste-text {
+    background-image: url(images/icons/clipboard-text.svg);
+  }
+
   i.success {
     background-image: url(images/icons/success.svg);
   }
