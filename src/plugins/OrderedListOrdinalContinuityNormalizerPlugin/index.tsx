@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-import type {LexicalEditor, LexicalNode, RootNode} from 'lexical';
+import type {LexicalEditor, RootNode} from 'lexical';
 
 import {
   $isListItemNode,
@@ -102,29 +102,27 @@ type OrdinalContinuityPlan = {
   linkDepth: number;
   linkedDepths: number[];
   startsByDepth: Map<number, number>;
-  lists: ListNode[];
+  leadingLists: ListNode[];
+  trailingLists: ListNode[];
 };
 
 const isNumberedList = (list: ListNode) => list.getListType() === 'number';
 
-const isBeforeInRoot = (
-  rootNode: RootNode,
-  a: LexicalNode,
-  b: LexicalNode,
-): boolean => {
-  const children = rootNode.getChildren();
-  const getNodeIndex = (node: LexicalNode) =>
-    children.findIndex((child) => child.getKey() === node.getKey());
+const pairAdjacentListEdges = (listEdges: SpineTraversalResult) =>
+  listEdges.reduce<[RootListSpines, RootListSpines][]>(
+    (pairs, current, index, array) => {
+      const next = array[index + 1];
 
-  return (
-    getNodeIndex(a) !== -1 &&
-    getNodeIndex(b) !== -1 &&
-    getNodeIndex(a) < getNodeIndex(b)
+      if (next) {
+        pairs.push([current, next] as const);
+      }
+
+      return pairs;
+    },
+    [],
   );
-};
 
-const deriveOrdinalContinuityPlan = (
-  rootNode: RootNode,
+const deriveChainedOrdinalContinuityPlan = (
   previousSpine: RootListSpines,
   nextSpine: RootListSpines,
 ): OrdinalContinuityPlan => {
@@ -134,12 +132,6 @@ const deriveOrdinalContinuityPlan = (
       nextSpine.leading.lists.length,
     ) - 1;
   const maximumDepthInPreviousSpine = previousSpine.trailing.lists.length - 1;
-
-  const inOrder = isBeforeInRoot(
-    rootNode,
-    previousSpine.rootList,
-    nextSpine.rootList,
-  );
 
   const findDeepestLinkableDepth = (depth: number): number =>
     depth < 0
@@ -151,7 +143,7 @@ const deriveOrdinalContinuityPlan = (
           const bothListsAreNumberedList =
             isNumberedList(previousList) && isNumberedList(nextList);
 
-          return inOrder && bothListsAreNumberedList
+          return bothListsAreNumberedList
             ? depth
             : findDeepestLinkableDepth(depth - 1);
         })();
@@ -176,11 +168,11 @@ const deriveOrdinalContinuityPlan = (
           maximumDepthInPreviousSpine === deepestLinkDepth;
         const currentDepthIsDeepestLinkedDepth =
           currentDepth === deepestLinkDepth;
-        const previousValueIsNotIncrementedYet =
+        const requiresIncrementAtThisDepth =
           isLinkedAtMaxmimumDepth && currentDepthIsDeepestLinkedDepth;
 
         const start = previousLastValueIsValid
-          ? previousValueIsNotIncrementedYet
+          ? requiresIncrementAtThisDepth
             ? previousLastValue + 1
             : previousLastValue
           : // If value is missing or 0, treat it as non-linkable at that depth (defensive).
@@ -192,78 +184,107 @@ const deriveOrdinalContinuityPlan = (
   );
 
   return {
+    leadingLists: nextSpine.leading.lists,
     linkDepth: deepestLinkDepth,
     linkedDepths,
-    lists: nextSpine.leading.lists,
     startsByDepth,
+    trailingLists: nextSpine.trailing.lists,
   };
 };
 
-const normalizeLinkedOrderedLists = (rootNode: RootNode): boolean => {
+const deriveCascadedOrdinalContinuityPlans = (
+  chainedOrdinalContinuityPlans: OrdinalContinuityPlan[],
+) => {
+  return chainedOrdinalContinuityPlans.reduce<OrdinalContinuityPlan[]>(
+    (plans, plan) => {
+      const previousPlan = plans.at(-1);
+
+      if (previousPlan) {
+        plan.startsByDepth.forEach((start, depth) => {
+          const lastStart = previousPlan.startsByDepth.get(depth) ?? NaN;
+
+          // Early return if `lastStart` is `NaN`
+          if (Number.isNaN(lastStart)) {
+            return;
+          }
+
+          // Null coalesce to `NaN` because NaN === NaN evaluates to `false`
+          const leadingListNodeKeyAtCurrentDepth =
+            previousPlan.leadingLists[depth]?.getKey() ?? NaN;
+          const trailingListNodeKeyAtCurrentDepth =
+            previousPlan.trailingLists[depth]?.getKey() ?? NaN;
+          const sameListIsLeadingAndTrailing =
+            leadingListNodeKeyAtCurrentDepth ===
+            trailingListNodeKeyAtCurrentDepth;
+          const lastStartIsGreaterThanCurrentStart = lastStart > start;
+          const shouldCascadeContinuity =
+            sameListIsLeadingAndTrailing && lastStartIsGreaterThanCurrentStart;
+
+          plan.startsByDepth.set(
+            depth,
+            shouldCascadeContinuity ? lastStart : start,
+          );
+        });
+      }
+
+      plans.push(plan);
+
+      return plans;
+    },
+    [],
+  );
+};
+
+type Normalization = () => void;
+
+const computeOrderedListOrdinalContinuityNormalizations = (
+  rootNode: RootNode,
+): Normalization[] => {
   const allListEdges = traverseAllListEdges(rootNode);
 
-  const pairedListEdges = allListEdges.reduce<
-    [RootListSpines, RootListSpines][]
-  >((pairs, current, index, array) => {
-    const next = array[index + 1];
+  const adjacentListEdges = pairAdjacentListEdges(allListEdges);
 
-    if (next) {
-      pairs.push([current, next] as const);
-    }
-
-    return pairs;
-  }, []);
-
-  const chainedContinuityPlans = pairedListEdges.map(([previous, next]) =>
-    deriveOrdinalContinuityPlan(rootNode, previous, next),
+  const chainedOrdinalContinuityPlans = adjacentListEdges.map(
+    ([previous, next]) => deriveChainedOrdinalContinuityPlan(previous, next),
   );
 
-  const cascadedContinuityPlans = chainedContinuityPlans.reduce<
-    OrdinalContinuityPlan[]
-  >((plans, plan) => {
-    const previousPlan = plans.at(-1);
-
-    if (previousPlan) {
-      plan.startsByDepth.forEach((start, depth) => {
-        const lastStart = previousPlan.startsByDepth.get(depth) ?? NaN;
-
-        if (!Number.isNaN(lastStart) && lastStart > start) {
-          plan.startsByDepth.set(depth, lastStart);
-        }
-      });
-    }
-
-    plans.push(plan);
-
-    return plans;
-  }, []);
+  const cascadedOrdinalContinuityPlans = deriveCascadedOrdinalContinuityPlans(
+    chainedOrdinalContinuityPlans,
+  );
 
   // Apply (idempotently): only write when mismatched.
-  return cascadedContinuityPlans.reduce<boolean>((didChange, plan) => {
-    const didChangeForPlan = plan.linkedDepths.reduce<boolean>(
-      (changed, depth) => {
-        const list = plan.lists[depth];
+  const normalizations = cascadedOrdinalContinuityPlans.reduce<Normalization[]>(
+    (allPlanNormalizations, plan) => {
+      const singlePlanNormalizations = plan.linkedDepths.reduce<
+        Normalization[]
+      >((listStartSetters, depth) => {
+        const list = plan.leadingLists[depth];
         const start = plan.startsByDepth.get(depth) ?? 0;
 
         // Only normalize ordered lists. (Skip bullets/checks.)
         if (!isNumberedList(list) || start <= 0) {
-          return changed;
+          return listStartSetters;
         }
 
         const currentStart = list.getStart();
 
         if (currentStart === start) {
-          return changed;
+          return listStartSetters;
         }
 
-        list.setStart(start);
-        return true;
-      },
-      false,
-    );
+        listStartSetters.push(() => {
+          list.setStart(start);
+        });
 
-    return didChange || didChangeForPlan;
-  }, false);
+        return listStartSetters;
+      }, []);
+
+      return allPlanNormalizations.concat(singlePlanNormalizations);
+    },
+    [],
+  );
+
+  return normalizations;
 };
 
 /* REF: https://lexical.dev/docs/concepts/listeners#registerupdatelistener
@@ -299,7 +320,10 @@ function registerOrderedListOrdinalContinuityNormalizer(
     }
 
     const rootNode = $getRoot();
-    normalizeLinkedOrderedLists(rootNode);
+    const normalizations =
+      computeOrderedListOrdinalContinuityNormalizations(rootNode);
+
+    normalizations.forEach((normalization) => normalization());
   });
 }
 
