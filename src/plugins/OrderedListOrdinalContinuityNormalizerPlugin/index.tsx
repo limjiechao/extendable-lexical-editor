@@ -99,6 +99,28 @@ const traverseAllListEdges = (lexicalRoot: RootNode): SpineTraversalResult => {
 };
 
 type OrdinalContinuityPlan = {
+  /**
+   * NOTE: Depths at which continuity was actually applied
+   *
+   * This makes continuity semantic, rather than structural.
+   *
+   * ```ts
+   * const sameListIsLeadingAndTrailing =
+   *   leadingListNodeKeyAtCurrentDepth === trailingListNodeKeyAtCurrentDepth;
+   *  ```
+   *
+   * This assumes if the previous plan’s leading and trailing list at this
+   * depth are the same node, then this depth represents a continuous chain.
+   *
+   * This is fragile as depending on leading and trailing lists being the same
+   * node is an implementation artifact of spine extraction.
+   *
+   * What we actually care about: Did the previous plan apply continuity at
+   * this depth?
+   *
+   * That works today, but it encodes a structural coincidence, not a semantic rule.
+   */
+  appliedDepths: Set<number>;
   linkDepth: number;
   linkedDepths: number[];
   startsByDepth: Map<number, number>;
@@ -183,7 +205,11 @@ const deriveChainedOrdinalContinuityPlan = (
       .filter(([, start]) => start > 0),
   );
 
+  // Explicit “continuity applies at these depths” (semantic, not mutation-based)
+  const appliedDepths = new Set<number>(linkedDepths);
+
   return {
+    appliedDepths,
     leadingLists: nextSpine.leading.lists,
     linkDepth: deepestLinkDepth,
     linkedDepths,
@@ -208,17 +234,8 @@ const deriveCascadedOrdinalContinuityPlans = (
             return;
           }
 
-          // Null coalesce to `NaN` because NaN === NaN evaluates to `false`
-          const leadingListNodeKeyAtCurrentDepth =
-            previousPlan.leadingLists[depth]?.getKey() ?? NaN;
-          const trailingListNodeKeyAtCurrentDepth =
-            previousPlan.trailingLists[depth]?.getKey() ?? NaN;
-          const sameListIsLeadingAndTrailing =
-            leadingListNodeKeyAtCurrentDepth ===
-            trailingListNodeKeyAtCurrentDepth;
-          const lastStartIsGreaterThanCurrentStart = lastStart > start;
           const shouldCascadeContinuity =
-            sameListIsLeadingAndTrailing && lastStartIsGreaterThanCurrentStart;
+            previousPlan.appliedDepths.has(depth) && lastStart > start;
 
           plan.startsByDepth.set(
             depth,
