@@ -144,6 +144,117 @@ const pairAdjacentListEdges = (listEdges: SpineTraversalResult) =>
     [],
   );
 
+const computeExpectedStartsByDepthForLink = (
+  previousSpine: RootListSpines,
+  nextSpine: RootListSpines,
+): Map<number, number> => {
+  const commonMaximumDepth =
+    Math.min(
+      previousSpine.trailing.lists.length,
+      nextSpine.leading.lists.length,
+    ) - 1;
+
+  const maximumDepthInPreviousSpine = previousSpine.trailing.lists.length - 1;
+
+  const findDeepestLinkableDepth = (depth: number): number =>
+    depth < 0
+      ? -1
+      : (() => {
+          const previousList = previousSpine.trailing.lists[depth];
+          const nextList = nextSpine.leading.lists[depth];
+
+          const bothListsAreNumbered =
+            isNumberedList(previousList) && isNumberedList(nextList);
+
+          return bothListsAreNumbered
+            ? depth
+            : findDeepestLinkableDepth(depth - 1);
+        })();
+
+  const deepestLinkDepth = findDeepestLinkableDepth(commonMaximumDepth);
+
+  const linkedDepths =
+    deepestLinkDepth < 0
+      ? []
+      : Array.from({length: deepestLinkDepth + 1}, (_, index) => index);
+
+  return new Map<number, number>(
+    linkedDepths
+      .map((currentDepth) => {
+        const previousLastValue =
+          previousSpine.trailing.listItems[currentDepth]?.getValue();
+
+        const previousLastValueIsValid =
+          Number.isFinite(previousLastValue) && previousLastValue > 0;
+
+        const isLinkedAtMaxmimumDepth =
+          maximumDepthInPreviousSpine === deepestLinkDepth;
+        const currentDepthIsDeepestLinkedDepth =
+          currentDepth === deepestLinkDepth;
+        const requiresIncrementAtThisDepth =
+          isLinkedAtMaxmimumDepth && currentDepthIsDeepestLinkedDepth;
+
+        const expectedStart = previousLastValueIsValid
+          ? requiresIncrementAtThisDepth
+            ? previousLastValue + 1
+            : previousLastValue
+          : 0;
+
+        return [currentDepth, expectedStart] as const;
+      })
+      .filter(([, expectedStart]) => expectedStart > 0),
+  );
+};
+
+const LIST_BOUNDARY_STATE = {
+  BROKEN: 'broken', // Explicit restart (future use)
+  COLD: 'cold', // No continuity intent
+  HOT: 'hot', // Continuity established and preserved
+} as const;
+
+type ListBoundaryState =
+  (typeof LIST_BOUNDARY_STATE)[keyof typeof LIST_BOUNDARY_STATE];
+
+const getListBoundaryState = (
+  previousSpine: RootListSpines,
+  nextSpine: RootListSpines,
+): ListBoundaryState => {
+  const expectedStartsByDepth = computeExpectedStartsByDepthForLink(
+    previousSpine,
+    nextSpine,
+  );
+
+  if (expectedStartsByDepth.size === 0) {
+    return LIST_BOUNDARY_STATE.COLD;
+  }
+
+  return Array.from(expectedStartsByDepth.entries()).some(
+    ([depth, expectedStart]) => {
+      const nextListAtDepth = nextSpine.leading.lists[depth];
+      if (!nextListAtDepth) {
+        return false;
+      }
+
+      const currentStart = nextListAtDepth.getStart();
+
+      // Default start → no intent
+      if (!Number.isFinite(currentStart) || currentStart === 1) {
+        return false;
+      }
+
+      // Bootstrap (explicit authorial intent)
+      if (currentStart === expectedStart) {
+        return true;
+      }
+
+      // Preservation (already hot)
+      return true;
+    },
+  )
+    ? LIST_BOUNDARY_STATE.HOT
+    : LIST_BOUNDARY_STATE.COLD;
+};
+
 const deriveChainedOrdinalContinuityPlan = (
   previousSpine: RootListSpines,
   nextSpine: RootListSpines,
@@ -219,37 +330,38 @@ const deriveChainedOrdinalContinuityPlan = (
 };
 
 const deriveCascadedOrdinalContinuityPlans = (
-  chainedOrdinalContinuityPlans: OrdinalContinuityPlan[],
+  chainedOrdinalContinuityPlans: Array<OrdinalContinuityPlan | null>,
 ) => {
-  return chainedOrdinalContinuityPlans.reduce<OrdinalContinuityPlan[]>(
-    (plans, plan) => {
-      const previousPlan = plans.at(-1);
+  return chainedOrdinalContinuityPlans.reduce<
+    Array<OrdinalContinuityPlan | null>
+  >((plans, plan) => {
+    const previousPlan = plans.at(-1) ?? null;
 
-      if (previousPlan) {
-        plan.startsByDepth.forEach((start, depth) => {
-          const lastStart = previousPlan.startsByDepth.get(depth) ?? NaN;
+    // Break in continuity chain: reset cascade.
+    if (!plan || !previousPlan) {
+      plans.push(plan);
+      return plans;
+    }
 
-          // Early return if `lastStart` is `NaN`
-          if (Number.isNaN(lastStart)) {
-            return;
-          }
+    plan.startsByDepth.forEach((start, depth) => {
+      const lastStart = previousPlan.startsByDepth.get(depth) ?? NaN;
 
-          const shouldCascadeContinuity =
-            previousPlan.appliedDepths.has(depth) && lastStart > start;
-
-          plan.startsByDepth.set(
-            depth,
-            shouldCascadeContinuity ? lastStart : start,
-          );
-        });
+      if (Number.isNaN(lastStart)) {
+        return;
       }
 
-      plans.push(plan);
+      const shouldCascadeContinuity =
+        previousPlan.appliedDepths.has(depth) && lastStart > start;
 
-      return plans;
-    },
-    [],
-  );
+      plan.startsByDepth.set(
+        depth,
+        shouldCascadeContinuity ? lastStart : start,
+      );
+    });
+
+    plans.push(plan);
+    return plans;
+  }, []);
 };
 
 type Normalization = () => void;
@@ -261,9 +373,17 @@ const computeOrderedListOrdinalContinuityNormalizations = (
 
   const adjacentListEdges = pairAdjacentListEdges(allListEdges);
 
-  const chainedOrdinalContinuityPlans = adjacentListEdges.map(
-    ([previous, next]) => deriveChainedOrdinalContinuityPlan(previous, next),
-  );
+  const chainedOrdinalContinuityPlans = adjacentListEdges
+    .map(([previous, next]) => {
+      const boundaryState = getListBoundaryState(previous, next);
+
+      if (boundaryState !== LIST_BOUNDARY_STATE.HOT) {
+        return null;
+      }
+
+      return deriveChainedOrdinalContinuityPlan(previous, next);
+    })
+    .filter((plan): plan is OrdinalContinuityPlan => plan !== null);
 
   const cascadedOrdinalContinuityPlans = deriveCascadedOrdinalContinuityPlans(
     chainedOrdinalContinuityPlans,
@@ -272,6 +392,10 @@ const computeOrderedListOrdinalContinuityNormalizations = (
   // Apply (idempotently): only write when mismatched.
   const normalizations = cascadedOrdinalContinuityPlans.reduce<Normalization[]>(
     (allPlanNormalizations, plan) => {
+      if (!plan) {
+        return allPlanNormalizations;
+      }
+
       const singlePlanNormalizations = plan.linkedDepths.reduce<
         Normalization[]
       >((listStartSetters, depth) => {
