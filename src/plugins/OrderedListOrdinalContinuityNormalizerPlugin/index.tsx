@@ -130,7 +130,7 @@ type OrdinalContinuityPlan = {
 
 const isNumberedList = (list: ListNode) => list.getListType() === 'number';
 
-const pairAdjacentListEdges = (listEdges: SpineTraversalResult) =>
+const pairSoftAdjacentListEdges = (listEdges: SpineTraversalResult) =>
   listEdges.reduce<[RootListSpines, RootListSpines][]>(
     (pairs, current, index, array) => {
       const next = array[index + 1];
@@ -212,117 +212,65 @@ const LIST_BOUNDARY_STATE = {
   HOT: 'hot', // Continuity established and preserved
 } as const;
 
-type ListBoundaryState =
-  (typeof LIST_BOUNDARY_STATE)[keyof typeof LIST_BOUNDARY_STATE];
+type ListBoundaryEvaluation =
+  | {state: typeof LIST_BOUNDARY_STATE.COLD}
+  | {
+      state: typeof LIST_BOUNDARY_STATE.HOT;
+      expectedStartsByDepth: Map<number, number>;
+    };
 
-const getListBoundaryState = (
+const evaluateListBoundary = (
   previousSpine: RootListSpines,
   nextSpine: RootListSpines,
-): ListBoundaryState => {
+): ListBoundaryEvaluation => {
   const expectedStartsByDepth = computeExpectedStartsByDepthForLink(
     previousSpine,
     nextSpine,
   );
 
   if (expectedStartsByDepth.size === 0) {
-    return LIST_BOUNDARY_STATE.COLD;
+    return {state: LIST_BOUNDARY_STATE.COLD};
   }
 
-  return Array.from(expectedStartsByDepth.entries()).some(
-    ([depth, expectedStart]) => {
-      const nextListAtDepth = nextSpine.leading.lists[depth];
-      if (!nextListAtDepth) {
-        return false;
-      }
+  const isHot = Array.from(expectedStartsByDepth.entries()).some(([depth]) => {
+    const nextListAtDepth = nextSpine.leading.lists[depth];
+    if (!nextListAtDepth) {
+      return false;
+    }
 
-      const currentStart = nextListAtDepth.getStart();
+    const currentStart = nextListAtDepth.getStart();
 
-      // Default start → no intent
-      if (!Number.isFinite(currentStart) || currentStart === 1) {
-        return false;
-      }
+    if (!Number.isFinite(currentStart) || currentStart === 1) {
+      return false;
+    }
 
-      // Bootstrap (explicit authorial intent)
-      if (currentStart === expectedStart) {
-        return true;
-      }
+    // Bootstrap or preservation
+    return true;
+  });
 
-      // Preservation (already hot)
-      return true;
-    },
-  )
-    ? LIST_BOUNDARY_STATE.HOT
-    : LIST_BOUNDARY_STATE.COLD;
+  return isHot
+    ? {expectedStartsByDepth, state: LIST_BOUNDARY_STATE.HOT}
+    : {state: LIST_BOUNDARY_STATE.COLD};
 };
 
-const deriveChainedOrdinalContinuityPlan = (
-  previousSpine: RootListSpines,
+const deriveChainedOrdinalContinuityPlanFromExpectedStarts = (
   nextSpine: RootListSpines,
+  expectedStartsByDepth: Map<number, number>,
 ): OrdinalContinuityPlan => {
-  const commonMaximumDepth =
-    Math.min(
-      previousSpine.trailing.lists.length,
-      nextSpine.leading.lists.length,
-    ) - 1;
-  const maximumDepthInPreviousSpine = previousSpine.trailing.lists.length - 1;
-
-  const findDeepestLinkableDepth = (depth: number): number =>
-    depth < 0
-      ? -1
-      : (() => {
-          const previousList = previousSpine.trailing.lists[depth];
-          const nextList = nextSpine.leading.lists[depth];
-
-          const bothListsAreNumberedList =
-            isNumberedList(previousList) && isNumberedList(nextList);
-
-          return bothListsAreNumberedList
-            ? depth
-            : findDeepestLinkableDepth(depth - 1);
-        })();
-
-  const deepestLinkDepth = findDeepestLinkableDepth(commonMaximumDepth);
-
-  const linkedDepths =
-    deepestLinkDepth < 0
-      ? []
-      : Array.from({length: deepestLinkDepth + 1}, (_, index) => index);
-
-  const startsByDepth = new Map<number, number>(
-    linkedDepths
-      .map((currentDepth) => {
-        const previousLastValue =
-          previousSpine.trailing.listItems[currentDepth]?.getValue();
-
-        const previousLastValueIsValid =
-          Number.isFinite(previousLastValue) && previousLastValue > 0;
-
-        const isLinkedAtMaxmimumDepth =
-          maximumDepthInPreviousSpine === deepestLinkDepth;
-        const currentDepthIsDeepestLinkedDepth =
-          currentDepth === deepestLinkDepth;
-        const requiresIncrementAtThisDepth =
-          isLinkedAtMaxmimumDepth && currentDepthIsDeepestLinkedDepth;
-
-        const start = previousLastValueIsValid
-          ? requiresIncrementAtThisDepth
-            ? previousLastValue + 1
-            : previousLastValue
-          : // If value is missing or 0, treat it as non-linkable at that depth (defensive).
-            0;
-
-        return [currentDepth, start] as const;
-      })
-      .filter(([, start]) => start > 0),
+  const linkedDepths = Array.from(expectedStartsByDepth.keys()).sort(
+    (a, b) => a - b,
   );
 
-  // Explicit “continuity applies at these depths” (semantic, not mutation-based)
-  const appliedDepths = new Set<number>(linkedDepths);
+  const linkDepth = linkedDepths.reduce((max, d) => (d > max ? d : max), -1);
+
+  const startsByDepth = new Map<number, number>(expectedStartsByDepth);
+
+  const appliedDepths = new Set<number>(startsByDepth.keys());
 
   return {
     appliedDepths,
     leadingLists: nextSpine.leading.lists,
-    linkDepth: deepestLinkDepth,
+    linkDepth,
     linkedDepths,
     startsByDepth,
     trailingLists: nextSpine.trailing.lists,
@@ -371,19 +319,20 @@ const computeOrderedListOrdinalContinuityNormalizations = (
 ): Normalization[] => {
   const allListEdges = traverseAllListEdges(rootNode);
 
-  const adjacentListEdges = pairAdjacentListEdges(allListEdges);
+  const adjacentListEdges = pairSoftAdjacentListEdges(allListEdges);
 
-  const chainedOrdinalContinuityPlans = adjacentListEdges
-    .map(([previous, next]) => {
-      const boundaryState = getListBoundaryState(previous, next);
+  const chainedOrdinalContinuityPlans = adjacentListEdges.map(
+    ([previous, next]) => {
+      const evaluation = evaluateListBoundary(previous, next);
 
-      if (boundaryState !== LIST_BOUNDARY_STATE.HOT) {
-        return null;
-      }
-
-      return deriveChainedOrdinalContinuityPlan(previous, next);
-    })
-    .filter((plan): plan is OrdinalContinuityPlan => plan !== null);
+      return evaluation.state === LIST_BOUNDARY_STATE.HOT
+        ? deriveChainedOrdinalContinuityPlanFromExpectedStarts(
+            next,
+            evaluation.expectedStartsByDepth,
+          )
+        : null;
+    },
+  );
 
   const cascadedOrdinalContinuityPlans = deriveCascadedOrdinalContinuityPlans(
     chainedOrdinalContinuityPlans,
@@ -472,101 +421,161 @@ function registerOrderedListOrdinalContinuityNormalizer(
  * # Linked Ordered Lists Normalizer
  *
  * This plugin normalizes numbering continuity across adjacent root-level
- * ordered lists in a Lexical document. It is designed to be idempotent and
- * to run inside a NodeTransform to avoid update waterfalls.
+ * ordered lists in a Lexical document.
+ *
+ * It is designed to be idempotent and to run inside a ListNode NodeTransform
+ * so all mutations occur within the same editor update pass.
  *
  * ────────────────────────────────────────────────────────────────────────────
  * # Structural Scope & Assumptions
  *
  * - Only ListNode instances that are direct children of the editor RootNode
- *   are considered as continuity candidates.
+ *   participate as continuity boundaries. Document order is defined strictly
+ *   by `RootNode.getChildren()`.
  *
- * - Continuity is evaluated only between adjacent root-level lists after
- *   ignoring non-list root nodes (e.g. paragraphs, quotes, tables) that break
- *   continuity.
+ * - Continuity boundaries are evaluated between “adjacent” root-level list nodes
+ *   under a *soft adjacency* policy:
+ *   - We first filter `RootNode.getChildren()` to only `ListNode`s.
+ *   - Adjacency is then defined within that filtered sequence.
  *
- * - Lists nested inside all other container blocks, if any, are not treated as
- *   independent continuity blocks.
+ *   Result: non-list root nodes (paragraphs/quotes/tables/etc.) are ignored for
+ *   pairing, so two lists separated by such nodes are still treated as adjacent
+ *   continuity candidates.
  *
- * - Document order is defined strictly by `RootNode.getChildren()`.
+ * - Nested lists are included only as part of a root list’s “spine” (see below),
+ *   not as independent continuity blocks.
+ *
+ * - This plugin assumes Lexical list structure invariants:
+ *   a ListNode contains ListItemNode children, and nested ListNodes (if any)
+ *   exist as direct children of a ListItemNode.
  *
  * ────────────────────────────────────────────────────────────────────────────
  * # List Semantics
  *
- * - Only numbered (ordered) lists participate in continuity.
- *   Bullet and checklist types are explicitly excluded.
- *
- * - Continuity is evaluated per nesting depth.
- *   A mismatch at a given depth breaks continuity at that depth and below,
- *   but shallower depths may still link.
- *
- * - Continuity is evaluated as long as there is common depth between
- *   trailing spine of prior root-level list and leading spine of the next
- *
- * - List depth is inferred structurally by walking nested `ListNodes` through
- *   `ListItemNode` children; no depth metadata is stored or assumed.
+ * - Only numbered (ordered) lists participate in continuity. Bullet/check lists
+ *   are excluded. The NodeTransform only executes for numbered ListNodes, and
+ *   continuity computations only link depths where *both* sides are numbered.
  *
  * ────────────────────────────────────────────────────────────────────────────
- * # Spine Model
+ * # Spine Model (Edge Traversal)
  *
- * - Each root-level list is modeled via two spines:
- *   – a leading spine (first item → first nested list → …)
- *   – a trailing spine (last item → last nested list → …)
+ * - Each root-level list is modeled as two “spines”:
+ *   - Leading spine: first list item → (first nested list) → …
+ *   - Trailing spine: last  list item → (last  nested list) → …
  *
- * - Nested lists are discovered only as direct children of ListItemNode.
+ * - At each depth, traversal selects the edge list item (`getFirstChild` or
+ *   `getLastChild`). From that list item, it discovers nested ListNode children
+ *   and selects either the first or last nested list depending on traversal edge.
  *
- * - If multiple nested lists exist within a list item, the first or last
- *   nested list is selected depending on traversal edge (leading/trailing).
+ * - If a list item contains multiple nested lists at the same depth, selection
+ *   is edge-dependent (first for leading, last for trailing). This is a
+ *   structural heuristic that makes “continuity depth” determinate.
  *
  * ────────────────────────────────────────────────────────────────────────────
- * # Ordinal Continuity Rules
+ * # Boundary Intent Model (Opt-in / Preserved)
  *
- * - Continuity is bounded by the shallowest common depth of the two spines.
+ * Continuity is *not* assumed by default. A boundary between two adjacent root
+ * lists is considered linkable only if it is “HOT”.
  *
- * - Linking always starts at depth 0 and proceeds contiguously downward.
+ * The boundary is evaluated via `evaluateListBoundary(previous, next)`:
  *
- * - The deepest linkable depth is chosen preferentially; deeper continuity
- *   wins over shallower continuity.
+ * - First, compute `expectedStartsByDepth` (see below). If it is empty, the
+ *   boundary is COLD.
  *
- * - Only the deepest linked depth requires incrementing (+1) the previous
- *   ordinal value. Shallower depths reuse the previous value as-is.
+ * - Otherwise, the boundary is HOT if, at any depth in `expectedStartsByDepth`,
+ *   the next list at that depth has a non-default `start` value.
+ *
+ *   Specifically:
+ *   - `start` is considered *default* if it is non-finite or `=== 1`.
+ *   - Any finite `start !== 1` is treated as “bootstrap or preservation”.
+ *
+ * This matches the production policy:
+ * - Authorial intent: a user can explicitly set list `start` (e.g. “Continue
+ *   numbering”, “Set numbering value…”, or typing an explicit ordinal).
+ * - Structural intent: once a boundary has been activated (non-default `start`),
+ *   it remains eligible for re-normalization even if the upstream list changes
+ *   later (preservation).
+ *
+ * Note: This model does not yet implement an explicit BROKEN boundary state.
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * # Expected Start Computation (Link Semantics)
+ *
+ * `computeExpectedStartsByDepthForLink(previous, next)` computes a map:
+ *   depth -> expectedStart
+ *
+ * - Depth range considered is bounded by the shallowest common depth of:
+ *   `previous.trailing.lists` and `next.leading.lists`.
+ *
+ * - The deepest linkable depth is the deepest depth where both lists at that
+ *   depth are numbered (ordered). All shallower depths down to 0 are considered
+ *   linked depths for this boundary.
+ *
+ * - For each linked depth:
+ *   - Read the previous trailing spine’s list item value at that depth:
+ *     `previous.trailing.listItems[depth].getValue()`.
+ *   - Missing/zero/non-finite values are treated defensively as non-linkable at
+ *     that depth (filtered out of the map).
+ *
+ * - Increment rule (Lexical-specific):
+ *   Only the deepest linked depth may require `+1`, and only when the previous
+ *   spine’s maximum depth equals that deepest linked depth.
+ *
+ *   In other words:
+ *   - If the deepest linked depth is also the deepest depth of the previous
+ *     trailing spine, expectedStart = previousLastValue + 1
+ *   - Otherwise, expectedStart = previousLastValue
  *
  *   This relies on Lexical semantics where the trailing ListItem value at the
  *   deepest depth represents the last rendered ordinal, while parent depths
  *   already represent the next start value.
  *
- * - Missing, zero, or non-finite ordinal values are treated defensively as
- *   non-linkable at that depth.
+ * ────────────────────────────────────────────────────────────────────────────
+ * # Plan Construction & Applied Depths
+ *
+ * - When a boundary is HOT, its continuity plan is derived directly from the
+ *   `expectedStartsByDepth` map (single source of truth):
+ *
+ *   - `linkedDepths` = sorted keys of `expectedStartsByDepth`
+ *   - `startsByDepth` = copy of `expectedStartsByDepth`
+ *   - `appliedDepths` = keys of `startsByDepth` (semantic: “continuity applies
+ *     at exactly these depths”, not an artifact of spine structure)
  *
  * ────────────────────────────────────────────────────────────────────────────
- * # Cascading Behavior
+ * # Cascading Behavior Across Multiple Boundaries
  *
- * - Continuity plans cascade forward across multiple adjacent root lists.
+ * - Plans are computed for every adjacent root-level list pair, producing a
+ *   sequence that may include `null` entries for COLD boundaries.
  *
- * - Ordinal starts are monotonic per depth and never decrease.
+ * - Cascading respects breaks: a `null` plan resets the cascade chain.
  *
- * - Later plans may inherit or override earlier starts, but no backward
- *   correction is performed.
- *
- * ────────────────────────────────────────────────────────────────────────────
- * # Transform Semantics
- *
- * - Normalization runs inside a ListNode NodeTransform to ensure all mutations
- *   occur within the same editor update pass.
- *
- * - The normalization logic is idempotent and safe to re-run multiple times
- *   within a single update.
- *
- * - This plugin does not attempt partial-document optimization; it assumes
- *   correctness over minimal recomputation.
+ * - For consecutive non-null plans, starts may be cascaded forward per depth:
+ *   - If the previous plan applied continuity at the depth and its start is
+ *     greater than the current plan’s start, the current plan inherits the
+ *     previous plan’s start at that depth.
+ *   - Starts are monotonic per depth and never decrease.
  *
  * ────────────────────────────────────────────────────────────────────────────
- * # Explicit Non-Goals
+ * # Normalization Semantics (Mutations)
  *
- * - No continuity across non-list root nodes
- * - No support for mixed list types
+ * - For each plan, for each `linkedDepth`:
+ *   - Only normalize numbered lists and only when `start > 0`.
+ *   - Write `list.setStart(start)` only when `list.getStart() !== start`.
+ *
+ * - The algorithm is idempotent (no-op when already normalized).
+ *
+ * - This implementation recomputes the entire root-level boundary sequence on
+ *   each eligible ListNode transform; it favors correctness over partial
+ *   recomputation.
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * # Explicit Non-Goals (Current)
+ *
+ * - No continuity across non-list root nodes (they break pairing)
+ * - No support for mixed list types in a linked boundary
  * - No repair of malformed list structures
- * - No inference of user intent beyond document structure
+ * - No explicit “BROKEN” boundary (restart intent) handling yet
+ *
  */
 function OrderedListOrdinalContinuityNormalizerPlugin() {
   const [editor] = useLexicalComposerContext();
