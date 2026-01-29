@@ -187,12 +187,12 @@ const computeExpectedStartsByDepthForLink = (
         const previousLastValueIsValid =
           Number.isFinite(previousLastValue) && previousLastValue > 0;
 
-        const isLinkedAtMaxmimumDepth =
+        const isLinkedAtMaximumDepth =
           maximumDepthInPreviousSpine === deepestLinkDepth;
         const currentDepthIsDeepestLinkedDepth =
           currentDepth === deepestLinkDepth;
         const requiresIncrementAtThisDepth =
-          isLinkedAtMaxmimumDepth && currentDepthIsDeepestLinkedDepth;
+          isLinkedAtMaximumDepth && currentDepthIsDeepestLinkedDepth;
 
         const expectedStart = previousLastValueIsValid
           ? requiresIncrementAtThisDepth
@@ -279,7 +279,7 @@ const deriveChainedOrdinalContinuityPlanFromExpectedStarts = (
 
 const deriveCascadedOrdinalContinuityPlans = (
   chainedOrdinalContinuityPlans: Array<OrdinalContinuityPlan | null>,
-) => {
+): Array<OrdinalContinuityPlan | null> => {
   return chainedOrdinalContinuityPlans.reduce<
     Array<OrdinalContinuityPlan | null>
   >((plans, plan) => {
@@ -291,7 +291,14 @@ const deriveCascadedOrdinalContinuityPlans = (
       return plans;
     }
 
-    plan.startsByDepth.forEach((start, depth) => {
+    // Clone plan so we don't mutate the input; cascade into the copy.
+    const startsByDepth = new Map<number, number>(plan.startsByDepth);
+    const cascadedPlan: OrdinalContinuityPlan = {
+      ...plan,
+      startsByDepth,
+    };
+
+    startsByDepth.forEach((start, depth) => {
       const lastStart = previousPlan.startsByDepth.get(depth) ?? NaN;
 
       if (Number.isNaN(lastStart)) {
@@ -301,13 +308,10 @@ const deriveCascadedOrdinalContinuityPlans = (
       const shouldCascadeContinuity =
         previousPlan.appliedDepths.has(depth) && lastStart > start;
 
-      plan.startsByDepth.set(
-        depth,
-        shouldCascadeContinuity ? lastStart : start,
-      );
+      startsByDepth.set(depth, shouldCascadeContinuity ? lastStart : start);
     });
 
-    plans.push(plan);
+    plans.push(cascadedPlan);
     return plans;
   }, []);
 };
